@@ -1,39 +1,47 @@
 const { chromium } = require('playwright');
-const path = require('path');
-const fs = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Helper to wait for a random time (anti-detection)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const randomDelay = (min = 2000, max = 5000) => delay(Math.floor(Math.random() * (max - min + 1)) + min);
 
-const DB_PATH = path.join(__dirname, 'db.json');
 const USER_DATA_DIR = path.join(__dirname, 'user_data');
 
-// Load database helper
-function loadDb() {
-  try {
-    if (fs.existsSync(DB_PATH)) {
-      return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-    }
-  } catch (err) {
-    console.error('Error reading db.json:', err);
-  }
-  return { queries: [], posts: [] };
+const { connectDb, Query, Post } = require('./db/mongoose');
+
+// Load active queries from MongoDB
+async function loadActiveQueries() {
+  return Query.find({ active: true }).lean();
 }
 
-// Save database helper
-function saveDb(data) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Error writing to db.json:', err);
-  }
+// Load all existing post IDs from MongoDB (for dedup)
+async function loadExistingIds() {
+  const posts = await Post.find({}, { id: 1, _id: 0 }).lean();
+  return new Set(posts.map(p => p.id));
+}
+
+// Save a batch of new posts to MongoDB
+async function savePosts(newPosts) {
+  if (!newPosts.length) return;
+  // bulkWrite with upsert to avoid duplicates on concurrent runs
+  const ops = newPosts.map(p => ({
+    updateOne: {
+      filter: { id: p.id },
+      update: { $setOnInsert: p },
+      upsert: true,
+    },
+  }));
+  await Post.bulkWrite(ops);
 }
 
 async function runScraper() {
   console.log('=== Starting LinkedIn Freelance Post Finder Scraper ===');
-  const db = loadDb();
-  const activeQueries = db.queries.filter(q => q.active);
+
+  await connectDb();
+
+  const activeQueries = await loadActiveQueries();
 
   if (activeQueries.length === 0) {
     console.log('No active search queries found. Exiting.');
@@ -103,8 +111,7 @@ async function runScraper() {
     for (const query of activeQueries) {
       console.log(`\n--- Running Search for: "${query.title}" ---`);
       
-      const currentDb = loadDb();
-      const existingIds = new Set(currentDb.posts.map(p => p.id));
+      const existingIds = await loadExistingIds();
       const newPosts = [];
       let newPostsCount = 0;
 
@@ -295,7 +302,6 @@ async function runScraper() {
               // Generate URN/ID hash if LinkedIn didn't provide one
               let urn = postData.urn;
               if (!urn) {
-                const crypto = require('crypto');
                 const hash = crypto.createHash('md5').update(postData.authorName + postData.content.substring(0, 100)).digest('hex');
                 urn = `urn:local:post:${hash}`;
               }
@@ -339,10 +345,9 @@ async function runScraper() {
         await randomDelay(3000, 6000); // Delay between sweeps
       }
 
-      // Prepend batch to DB once to preserve exact page order (newest first)
+      // Save new posts to MongoDB
       if (newPosts.length > 0) {
-        currentDb.posts = [...newPosts, ...currentDb.posts];
-        saveDb(currentDb);
+        await savePosts(newPosts);
         newPostsCount = newPosts.length;
       }
 
