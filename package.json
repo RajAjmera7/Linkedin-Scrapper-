@@ -1,0 +1,25 @@
+{
+  "name": "linkedin-freelance-post-finder",
+  "version": "1.0.0",
+  "description": "Locally run LinkedIn automation tool and web dashboard for finding recent freelance opportunities.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "scrape": "node scraper.js"
+  },
+  "keywords": [
+    "linkedin",
+    "playwright",
+    "scraper",
+    "freelance",
+    "lead-generation"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "playwright": "^1.45.1"
+  }
+}

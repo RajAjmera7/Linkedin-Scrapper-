@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Freelance Post Finder</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">
+          <i data-lucide="radar"></i>
+        </div>
+        <span>GigRadar</span>
+      </div>
+
+      <nav class="sidebar-menu">
+        <button class="menu-item active" data-target="dashboard-section">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="menu-item" data-target="queries-section">
+          <i data-lucide="search-code"></i>
+          <span>Search Queries</span>
+        </button>
+        <button class="menu-item" data-target="terminal-section" id="menu-terminal-btn">
+          <i data-lucide="terminal"></i>
+          <span>Scraper Console</span>
+          <span class="active-dot hidden"></span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator">
+          <span class="pulse-dot idle" id="scraper-pulse"></span>
+          <span id="scraper-status-text">Scraper Idle</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Navbar -->
+      <header class="top-bar">
+        <h1 class="page-title" id="page-title-text">Dashboard</h1>
+        <div class="header-actions" style="display: flex; align-items: center; gap: 12px;">
+          <button class="btn" id="help-btn" style="padding: 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px;">
+            <i data-lucide="help-circle"></i>
+            <span>Guide</span>
+          </button>
+          <button class="btn btn-primary btn-icon" id="start-scraper-btn">
+            <i data-lucide="play" id="btn-play-icon"></i>
+            <span id="btn-play-text">Run Scraper</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW 1: DASHBOARD / LEADS -->
+      <section id="dashboard-section" class="content-section active">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i data-lucide="briefcase"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-total">0</h3>
+              <p>Total Leads</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i data-lucide="sparkles"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-new">0</h3>
+              <p>New Leads</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i data-lucide="send"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-contacted">0</h3>
+              <p>Contacted</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon gray">
+              <i data-lucide="eye-off"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="stat-ignored">0</h3>
+              <p>Ignored</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <i data-lucide="search"></i>
+            <input type="text" id="lead-search" placeholder="Search keywords in posts...">
+          </div>
+          <div class="filter-actions">
+            <select id="status-filter">
+              <option value="ALL">All Statuses</option>
+              <option value="New">New</option>
+              <option value="Saved">Saved</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Ignored">Ignored</option>
+            </select>
+            <select id="query-filter">
+              <option value="ALL">All Queries</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Leads List -->
+        <div class="leads-container" id="leads-list">
+          <!-- Lead Cards dynamically injected here -->
+          <div class="empty-state" id="leads-empty">
+            <i data-lucide="inbox"></i>
+            <h3>No leads found</h3>
+            <p>Configure search queries and run the scraper to gather freelance posts from LinkedIn.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: SEARCH QUERIES -->
+      <section id="queries-section" class="content-section">
+        <div class="section-header">
+          <h2>Configure LinkedIn Search Terms</h2>
+          <button class="btn btn-secondary btn-icon" id="add-query-btn">
+            <i data-lucide="plus"></i>
+            <span>Add Query</span>
+          </button>
+        </div>
+
+        <p class="section-desc"> Define the keyword combinations LinkedIn will search for. Use capitals for Boolean operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>).</p>
+
+        <div class="queries-grid" id="queries-list">
+          <!-- Query Cards injected here -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: SCRAPER CONSOLE -->
+      <section id="terminal-section" class="content-section">
+        <div class="terminal-header">
+          <div class="terminal-title">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-name">Scraper Engine Console</span>
+          </div>
+          <button class="btn btn-danger btn-sm hidden" id="stop-scraper-btn">Force Stop</button>
+        </div>
+        <div class="terminal-body" id="terminal-logs">
+          <div class="terminal-line system">Console initialized. Ready to run sweeps...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: ADD/EDIT SEARCH QUERY -->
+  <div class="modal-overlay" id="query-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Search Query</h3>
+        <button class="modal-close" onclick="closeModal('query-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="query-form">
+        <input type="hidden" id="query-id">
+        <div class="form-group">
+          <label for="query-title">Query Name / Job Title</label>
+          <input type="text" id="query-title" placeholder="e.g. React Freelancer" required>
+        </div>
+        <div class="form-group">
+          <label for="query-keywords">LinkedIn Boolean Search String</label>
+          <textarea id="query-keywords" rows="4" placeholder='e.g. ("hiring" OR "looking for") AND ("freelance" OR "contract") AND "React" NOT "full-time"' required></textarea>
+          <small class="form-tip">Boolean tips: Keep operators capitalized (AND, OR, NOT). Group alternatives inside parentheses.</small>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('query-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Query</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PITCH GENERATOR -->
+  <div class="modal-overlay" id="pitch-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>Outreach Pitch Generator</h3>
+        <button class="modal-close" onclick="closeModal('pitch-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="pitch-settings">
+          <div class="form-group">
+            <label for="pitch-role">Target Role</label>
+            <input type="text" id="pitch-role" placeholder="e.g. Senior Frontend Developer">
+          </div>
+          <div class="form-group">
+            <label for="pitch-template">Pitch Style</label>
+            <select id="pitch-template">
+              <option value="direct">Direct & Professional (High Conversion)</option>
+              <option value="problem_solver">Problem Solver (Shows Expertise)</option>
+              <option value="casual">Casual & Friendly (Conversation Starter)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pitch-result-wrapper">
+          <label>Generated Pitch</label>
+          <div class="pitch-textarea-container">
+            <textarea id="pitch-text" rows="12" readonly></textarea>
+            <button class="btn btn-secondary btn-sm copy-btn" id="copy-pitch-btn">
+              <i data-lucide="copy"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: HELP GUIDE -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>Quick Start Onboarding Guide</h3>
+        <button class="modal-close" onclick="closeModal('help-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="onboarding-steps" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="step" style="display: flex; gap: 16px;">
+            <div class="step-badge" style="background: var(--primary-gradient); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-family: var(--font-header);">1</div>
+            <div>
+              <h4 style="margin-bottom: 4px; font-size: 15px; font-family: var(--font-header);">Configure Search Queries</h4>
+              <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">Go to the <b>"Search Queries"</b> tab in the sidebar. We preloaded two active queries. You can create custom Boolean strings targeting your specific tech stack or skill sets.</p>
+            </div>
+          </div>
+          <div class="step" style="display: flex; gap: 16px;">
+            <div class="step-badge" style="background: var(--primary-gradient); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-family: var(--font-header);">2</div>
+            <div>
+              <h4 style="margin-bottom: 4px; font-size: 15px; font-family: var(--font-header);">Run the Scraper & Log In</h4>
+              <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">Click <b>"Run Scraper"</b> in the top bar. A Chrome browser window will open on your desktop. Go to the <b>"Scraper Console"</b> tab in the app sidebar to watch the logs. Log in to your LinkedIn account in the Chrome window. Once you reach the feed, the scraper automatically takes over and closes Chrome when done!</p>
+            </div>
+          </div>
+          <div class="step" style="display: flex; gap: 16px;">
+            <div class="step-badge" style="background: var(--primary-gradient); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-family: var(--font-header);">3</div>
+            <div>
+              <h4 style="margin-bottom: 4px; font-size: 15px; font-family: var(--font-header);">Review Leads & Generate Pitches</h4>
+              <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">Scraped posts appear on your Dashboard. For each lead, read the post content, click <b>"View Post"</b> to open it on LinkedIn, or click <b>"Draft Pitch"</b> to get a custom cold outreach message tailored to their request!</p>
+            </div>
+          </div>
+          <div class="step" style="display: flex; gap: 16px;">
+            <div class="step-badge" style="background: var(--primary-gradient); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; font-family: var(--font-header);">4</div>
+            <div>
+              <h4 style="margin-bottom: 4px; font-size: 15px; font-family: var(--font-header);">Update Status and Save Session</h4>
+              <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">Classify your leads into <b>"Saved"</b>, <b>"Contacted"</b>, or <b>"Ignored"</b>. Your login credentials and cookies are saved locally in the browser context folder, meaning future scraper sweeps will bypass login entirely!</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 10px;">
+          <button class="btn btn-primary" onclick="closeModal('help-modal')">Got it, thanks!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
