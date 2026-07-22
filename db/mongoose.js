@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 let isConnected = false;
 
 async function connectDb() {
-  if (isConnected) return;
+  if (isConnected && mongoose.connection.readyState === 1) return;
 
   const uri = process.env.MONGODB_URI;
   if (!uri) {

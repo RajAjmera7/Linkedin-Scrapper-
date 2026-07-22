@@ -227,14 +227,30 @@ Best,
   }
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
-connectDb()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+// ─── Middleware: ensure DB is connected on every request (serverless safe) ────
+app.use(async (req, res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    console.error('DB connection failed:', err.message);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
+
+// ─── Start Server (local dev only) ───────────────────────────────────────────
+if (require.main === module) {
+  connectDb()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('Failed to connect to MongoDB:', err.message);
+      process.exit(1);
     });
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB:', err.message);
-    process.exit(1);
-  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
